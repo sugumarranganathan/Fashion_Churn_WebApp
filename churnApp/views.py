@@ -22,6 +22,7 @@ class PredictView(View):
         if form.is_valid():
             data = form.cleaned_data
 
+            # Create input DataFrame in the same feature order used during training
             input_df = pd.DataFrame([{
                 "Gender": data["Gender"],
                 "Age": data["Age"],
@@ -37,14 +38,20 @@ class PredictView(View):
                 "SatisfactionScore": data["SatisfactionScore"],
             }])
 
-            # Load encoders and model
+            # File paths
             encoders_path = os.path.join(settings.BASE_DIR, "fashion_rf_label_encoders.pkl")
             target_encoder_path = os.path.join(settings.BASE_DIR, "fashion_rf_target_encoder.pkl")
             model_path = os.path.join(settings.BASE_DIR, "fashion_churn_rf_model.pkl")
 
-            label_encoders = pickle.load(open(encoders_path, "rb"))
-            target_encoder = pickle.load(open(target_encoder_path, "rb"))
-            model = pickle.load(open(model_path, "rb"))
+            # Load encoders and model safely
+            with open(encoders_path, "rb") as f:
+                label_encoders = pickle.load(f)
+
+            with open(target_encoder_path, "rb") as f:
+                target_encoder = pickle.load(f)
+
+            with open(model_path, "rb") as f:
+                model = pickle.load(f)
 
             # Encode categorical columns
             for col in input_df.columns:
@@ -52,20 +59,20 @@ class PredictView(View):
                     try:
                         input_df[col] = label_encoders[col].transform(input_df[col].astype(str))
                     except ValueError:
-                        # Unknown category fallback
+                        # Fallback if an unexpected category appears
                         input_df[col] = 0
 
             # Predict
             pred = model.predict(input_df)
             final_result = target_encoder.inverse_transform(pred)[0]
 
-            # Updated professional result messages
-            if str(final_result).lower() == "yes":
+            # User-friendly output messages
+            if str(final_result).strip().lower() == "yes":
                 result = "Customer May Not Continue Purchasing"
             else:
                 result = "Customer Likely to Continue Purchasing"
 
-            # Optional confidence score
+            # Confidence score (if model supports predict_proba)
             confidence = None
             if hasattr(model, "predict_proba"):
                 probs = model.predict_proba(input_df)[0]
