@@ -37,7 +37,7 @@ class PredictView(View):
                 "SatisfactionScore": data["SatisfactionScore"],
             }])
 
-            # Load encoders
+            # Load encoders and model
             encoders_path = os.path.join(settings.BASE_DIR, "fashion_rf_label_encoders.pkl")
             target_encoder_path = os.path.join(settings.BASE_DIR, "fashion_rf_target_encoder.pkl")
             model_path = os.path.join(settings.BASE_DIR, "fashion_churn_rf_model.pkl")
@@ -46,7 +46,7 @@ class PredictView(View):
             target_encoder = pickle.load(open(target_encoder_path, "rb"))
             model = pickle.load(open(model_path, "rb"))
 
-            # Encode categorical columns like notebook style
+            # Encode categorical columns
             for col in input_df.columns:
                 if col in label_encoders:
                     try:
@@ -59,12 +59,13 @@ class PredictView(View):
             pred = model.predict(input_df)
             final_result = target_encoder.inverse_transform(pred)[0]
 
+            # Updated professional result messages
             if str(final_result).lower() == "yes":
-                result = "Customer Likely To Churn (Withdraw)"
+                result = "Customer May Not Continue Purchasing"
             else:
-                result = "Customer Will Stay (Continue)"
+                result = "Customer Likely to Continue Purchasing"
 
-            # Optional confidence
+            # Optional confidence score
             confidence = None
             if hasattr(model, "predict_proba"):
                 probs = model.predict_proba(input_df)[0]
