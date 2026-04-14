@@ -4,15 +4,14 @@ from .models import ChurnModel
 
 class ChurnForm(forms.ModelForm):
     GENDER_CHOICES = [
-        ('M', 'Male'),
-        ('F', 'Female'),
+        ('Male', 'Male'),
+        ('Female', 'Female'),
     ]
 
     MEMBERSHIP_CHOICES = [
         ('Free', 'Free'),
         ('Silver', 'Silver'),
         ('Gold', 'Gold'),
-        ('Platinum', 'Platinum'),
     ]
 
     CATEGORY_CHOICES = [
@@ -20,6 +19,7 @@ class ChurnForm(forms.ModelForm):
         ('Women', 'Women'),
         ('Kids', 'Kids'),
         ('Beauty', 'Beauty'),
+        ('Footwear', 'Footwear'),
     ]
 
     Gender = forms.ChoiceField(
